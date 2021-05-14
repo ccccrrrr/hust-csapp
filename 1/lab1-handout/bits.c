@@ -3,6 +3,10 @@
  * 
  * <Please put your name and userid here>
  * 
+ * ZhangHongTao
+ * U201915006
+ * ACM1901
+ * 
  * bits.c - Source file with your solutions to the Lab.
  *          This is the file you will hand in to your instructor.
  *
@@ -171,7 +175,8 @@ NOTES:
  *   Rating: 1
  */
 int lsbZero(int x) {
-  return 2;
+  // return 2;
+  return x ^ 0xFFFFFFFE;
 }
 /* 
  * byteNot - bit-inversion to byte n from word x  
@@ -182,7 +187,8 @@ int lsbZero(int x) {
  *   Rating: 2
  */
 int byteNot(int x, int n) {
-  return 2;
+  // return 2;
+  return (0x000000FF << (n << 3)) ^ x;
 }
 /* 
  *   byteXor - compare the nth byte of x and y, if it is same, return 0, if not, return 1
@@ -195,7 +201,9 @@ int byteNot(int x, int n) {
  *   Rating: 2 
  */
 int byteXor(int x, int y, int n) {
-  return 2;
+  // return 2;
+
+  return !(((0x000000FF << (n << 3)) & x) ^ ((0x000000FF << (n << 3)) & y));
 }
 /* 
  *   logicalAnd - x && y
@@ -204,7 +212,8 @@ int byteXor(int x, int y, int n) {
  *   Rating: 3 
  */
 int logicalAnd(int x, int y) {
-  return 2;
+  // return 2;
+  return (!!x & !!y);
 }
 /* 
  *   logicalOr - x || y
@@ -213,7 +222,8 @@ int logicalAnd(int x, int y) {
  *   Rating: 3 
  */
 int logicalOr(int x, int y) {
-  return 2;
+  // return 2;
+  return (!!x | !!y);
 }
 /* 
  * rotateLeft - Rotate x to the left by n
@@ -224,7 +234,9 @@ int logicalOr(int x, int y) {
  *   Rating: 3 
  */
 int rotateLeft(int x, int n) {
-  return 2;
+  // return 2;
+  int temp = (((~(0xFFFFFFFF << n)) << (32 - n)) ^ x ) >> (32 - n);
+  return (x << n) | temp;
 }
 /*
  * parityCheck - returns 1 if x contains an odd number of 1's
@@ -234,7 +246,8 @@ int rotateLeft(int x, int n) {
  *   Rating: 4
  */
 int parityCheck(int x) {
-  return 2;
+  // return 2;
+
 }
 /*
  * mul2OK - Determine if can compute 2*x without overflow
@@ -246,7 +259,9 @@ int parityCheck(int x) {
  *   Rating: 2
  */
 int mul2OK(int x) {
-  return 2;
+  // return 2;
+    return !!(x << 1 & 0x80000000);
+ 
 }
 /*
  * mult3div2 - multiplies by 3/2 rounding toward 0,
@@ -260,7 +275,10 @@ int mul2OK(int x) {
  *   Rating: 2
  */
 int mult3div2(int x) {
-  return 2;
+  // return 2;
+    int temp1 = (x + x + x) >> 1;
+    int temp2 = !!(!!(x & 0x80000000) & !!(x & 0x000000011));
+    return temp1 + temp2;
 }
 /* 
  * subOK - Determine if can compute x-y without overflow
