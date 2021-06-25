@@ -382,23 +382,25 @@ unsigned float_abs(unsigned uf) {
  * 
 */
 int float_f2i(unsigned uf) {
-    int expo = (uf >> 23) & 0xff - 127; // 得到阶
-    int container = (uf & 007fffff) | 0x00800000; // 得到小数的二进制表示
+    int expo = ((uf >> 23) & 0xff) - 127; // 得到阶
+    int container = (uf & 0x007fffff) | 0x00800000; // 得到小数的二进制表示
     if(expo > 31)
       return 0x80000000u; // 阶大于31，会出现溢出
+    if(uf == 0x0)
+	    return 0;
     if(expo < 0)
-	    return 0x0; // 阶小于0，转为整数直接为0
-    if(!((uf >> 31) && 0x1)) // 如果浮点数为负数
+	    return 0x0u; // 阶小于0，转为整数直接为0
+    if(!!(uf >> 31)) // 如果浮点数为负数
     {
     	if(expo > 23) // 阶大于23，直接左移（说明小数位没有损失）
-			return -(container << (x - 23));
+			return -(container << (expo - 23));
 		else
-			return -(container >> (23 - x));// 说明有小数位的损失
+			return -(container >> (23 - expo));// 说明有小数位的损失
     } else {
     	if(expo > 23)
-			return container << (x - 23);
+			return container << (expo - 23);
 		else
-			return container >> (23 - x);
+			return container >> (23 - expo);
     }
 }
 
