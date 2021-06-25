@@ -174,8 +174,10 @@ NOTES:
  *   Max ops: 5
  *   Rating: 1
  */
+/*
+  最低位置为0，即将x与0xfffe相与
+*/
 int lsbZero(int x) {
-  // return 2;
   int temp = ~0x1;
   return x & temp;
 }
@@ -187,8 +189,10 @@ int lsbZero(int x) {
  *   Max ops: 6
  *   Rating: 2
  */
+/*
+ * oxFF << (n << 3) 覆盖了需要异或的位
+*/
 int byteNot(int x, int n) {
-  // return 2;
   return (0xFF << (n << 3)) ^ x;
 }
 /* 
@@ -201,10 +205,12 @@ int byteNot(int x, int n) {
  *   Max ops: 20
  *   Rating: 2 
  */
+/*
+ * (0xFF << (n << 3)) & x 表示的是x的第n个字节的内容
+ * (0xFF << ((n) << 3)) & y 是y的第n个字节的内容
+*/
 int byteXor(int x, int y, int n) {
-  // return 2;
   return !!(((0xFF << ((n) << 3)) & x) ^ ((0xFF << ((n) << 3)) & y));
-
 }
 /* 
  *   logicalAnd - x && y
@@ -212,8 +218,10 @@ int byteXor(int x, int y, int n) {
  *   Max ops: 20
  *   Rating: 3 
  */
+/*
+ * 两次取非等价于x = x == 0 ? 0 : 1
+*/
 int logicalAnd(int x, int y) {
-  // return 2;
   return (!!x & !!y);
 }
 /* 
@@ -222,8 +230,10 @@ int logicalAnd(int x, int y) {
  *   Max ops: 20
  *   Rating: 3 
  */
+/*
+ * 与逻辑或相同，两次取非将非零数变为1
+*/
 int logicalOr(int x, int y) {
-  // return 2;
   return (!!x | !!y);
 }
 /* 
@@ -234,8 +244,12 @@ int logicalOr(int x, int y) {
  *   Max ops: 25
  *   Rating: 3 
  */
+/*
+ * temp是x左移后溢出的内容，需要作为返回值的低位
+ * (((~0x0 << (32+(~n+1)))) & x ) 代表的是提取溢出的内容
+ * (32+(~n+1))) 即 32 - n 因为需要右移32 - n位使最低的溢出位储存在temp的最低位中
+*/
 int rotateLeft(int x, int n) {
-  // return 2;
   int temp = ((((~0x0 << (32+(~n+1)))) & x ) >> (32+(~n+1))) & ~(~0x0 << n);
   return ((x << n) | temp);
 }
@@ -248,13 +262,13 @@ int rotateLeft(int x, int n) {
  */
 int parityCheck(int x) {
   // return 2;
-  x = x ^ (x << 16);
-  x = x ^ (x << 8);
+  x = x ^ (x << 16); // 高十六位和低十六位进行异或，因为1^1=0,1^0=1,所以有parityCheck(x)=parityCheck(x ^ (x << 16));
+  x = x ^ (x << 8); 
   x = x ^ (x << 4);
   x = x ^ (x << 2);
   x = x ^ (x << 1);
-  x = x >> 31;
-  return !!x;
+  x = x >> 31; // x的最高位就是最后答案
+  return !!x;  // 如果x非零，返回1
 }
 /*
  * mul2OK - Determine if can compute 2*x without overflow
@@ -266,10 +280,10 @@ int parityCheck(int x) {
  *   Rating: 2
  */
 int mul2OK(int x) {
-  // return 2;
-  //return (!(x & (0x40 << 24)) | !!(x & (0x80 << 24))) & ((!((x + (0x40 << 24)) & (0x80 << 24)) | !(x & (0x80 << 24))));
-      return (((x>>31)&0x1)^((x>>30)&0x1))^0x1;
-
+  // return (!(x & (0x40 << 24)) | !!(x & (0x80 << 24))) & ((!((x + (0x40 << 24)) & (0x80 << 24)) | !(x & (0x80 << 24))));
+  // 如果x是正数，x必须小于0x4000，即第30位不为1
+  // 如果x是负数，x必须大于0xC000，因此第30位必须为0
+    return (((x>>31)&0x1)^((x>>30)&0x1))^0x1;
 }
 
 /*
@@ -283,8 +297,11 @@ int mul2OK(int x) {
  *   Max ops: 12
  *   Rating: 2
  */
+/*
+ * 如果x为正数，无法整除2不需要进位，但是如果x为负数，无法整除2结果需要加1
+ * temp2的值为1，如果x为负数，并且无法整除2
+*/
 int mult3div2(int x) {
-  // return 2;
     int temp1 = (x + x + x);
     int temp2 = ((temp1 >> 31) & 0x1) & (temp1 & 0x1);
     int temp3 = temp1 >> 1;
@@ -298,6 +315,12 @@ int mult3div2(int x) {
  *   Max ops: 20
  *   Rating: 3
  */
+/*
+ * 如果x与y同号，那么相减肯定不会溢出
+ * !(!!(x & (0x80 << 24)) ^ !!(y & (0x80 << 24)))用来判断两个数是否同号
+ * 如果两数不同号，并且两数相减不溢出，那么结果的符号位一定和x的符号位相同
+ * !!(~((x + (~y+1)) ^ x) & (0x80 << 24))用来判断结果符号位是否和x的符号位相同
+*/
 int subOK(int x, int y) {
   return !(!!(x & (0x80 << 24)) ^ !!(y & (0x80 << 24))) | !!(~((x + (~y+1)) ^ x) & (0x80 << 24));
 
@@ -311,8 +334,12 @@ int subOK(int x, int y) {
  *   Max ops: 10
  *   Rating: 4
  */
+/*
+ * temp储存x的符号位
+ * 如果temp=0，直接返回x
+ * 如果temp=1，返回-x(即~x+1)
+*/
 int absVal(int x) {
-  // return 2;
   int temp = x >> 31;
   return (x & ~temp) | ((~x + 1) & temp);
 }
@@ -327,8 +354,12 @@ int absVal(int x) {
  *   Max ops: 10
  *   Rating: 2
  */
+
+/*
+ * 对于合法的小数，直接将符号位置零即可
+ * 如果uf为NaN(阶码全1且小数域非0)，直接返回NaN
+*/
 unsigned float_abs(unsigned uf) {
-  //return 2;
   unsigned res = uf & 0x7fffffff;
   if(res > 0x7F800000)
     return uf;
@@ -347,25 +378,27 @@ unsigned float_abs(unsigned uf) {
  *   Max ops: 30
  *   Rating: 4
  */
+/*
+ * 
+*/
 int float_f2i(unsigned uf) {
-    int expo = (uf >> 23) & 0xff - 127;
-    int container = (uf & 007fffff) | 0x00800000;
+    int expo = (uf >> 23) & 0xff - 127; // 得到阶
+    int container = (uf & 007fffff) | 0x00800000; // 得到小数的二进制表示
     if(expo > 31)
-	    return 0x80000000u;
+      return 0x80000000u; // 阶大于31，会出现溢出
     if(expo < 0)
-	    return 0x0;
-    if(!((uf >> 31) && 0x1))
+	    return 0x0; // 阶小于0，转为整数直接为0
+    if(!((uf >> 31) && 0x1)) // 如果浮点数为负数
     {
+    	if(expo > 23) // 阶大于23，直接左移（说明小数位没有损失）
+			return -(container << (x - 23));
+		else
+			return -(container >> (23 - x));// 说明有小数位的损失
+    } else {
     	if(expo > 23)
-		return -(container << (x - 23));
-	else
-		return -(container >> (23 - x));
-    }else{
-    	if(expo > 23)
-		return container << (x - 23);
-	else
-		return container >> (23 - x);
-    
+			return container << (x - 23);
+		else
+			return container >> (23 - x);
     }
 }
 
